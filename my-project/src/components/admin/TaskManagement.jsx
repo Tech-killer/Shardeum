@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 
-const API_BASE_URL = "https://aipoweredifl.com/hackethon/user.phpapi.php";
+const API_BASE_URL = "https://aipoweredifl.com/hackethon/api.php";
 
 export default function TaskManagement({ userRole, account, onTx }) {
   const [tasks, setTasks] = useState([]);
