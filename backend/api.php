@@ -5,10 +5,10 @@ header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS");
 header("Content-Type: application/json");
 
 // DB connection
-$host = "sql210.infinityfree.com";
-$user = "if0_39985390";
-$pass = "Ri49FOPVqoi";
-$db   = "if0_39985390_hackethon";
+$host = "localhost";
+$user = "u119975290_ifl";
+$pass = "A!@P@wered@!fl123";
+$db   = "u119975290_ifl";
 
 $conn = new mysqli($host, $user, $pass, $db);
 if ($conn->connect_error) {

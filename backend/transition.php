@@ -3,10 +3,10 @@ header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 
-$servername = "sql210.infinityfree.com";
-$username = "if0_39985390";
-$password = "Ri49FOPVqoi";
-$dbname = "if0_39985390_hackethon";
+$servername = "localhost";
+$username = "u119975290_ifl";
+$password = "A!@P@wered@!fl123";
+$dbname = "u119975290_ifl";
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 if ($conn->connect_error) {

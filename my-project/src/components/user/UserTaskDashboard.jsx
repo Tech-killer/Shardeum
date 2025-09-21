@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { ethers } from "ethers";
 
-const API_BASE_URL = "https://shardeum.wuaze.com/backend/user.php";
+const API_BASE_URL = "https://aipoweredifl.com/hackethon/user.php";
 
 export default function UserTaskDashboard({ account, onTx }) {
   const [tasks, setTasks] = useState([]);

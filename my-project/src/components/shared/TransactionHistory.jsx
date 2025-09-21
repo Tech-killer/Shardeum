@@ -21,7 +21,7 @@ export default function TransactionHistory({ account }) {
     try {
       console.log("📡 Fetching transaction history from remote backend...");
       
-      const response = await fetch("https://shardeum.wuaze.com/backend/transition.php").catch(err => {
+      const response = await fetch("https://aipoweredifl.com/hackethon/transition.php").catch(err => {
         console.error("❌ Transition.php fetch error:", err);
         return { json: () => ({ success: false, error: err.message }) };
       });
@@ -362,7 +362,7 @@ export default function TransactionHistory({ account }) {
             setTxHistory([]); // Clear existing data
             
             try {
-              const response = await fetch("https://shardeum.wuaze.com/backend/transition.php");
+              const response = await fetch("https://aipoweredifl.com/hackethon/transition.php");
               const data = await response.json();
               console.log("🔄 FORCE RELOAD: Raw response:", data);
               
