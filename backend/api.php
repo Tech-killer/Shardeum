@@ -5,10 +5,10 @@ header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS");
 header("Content-Type: application/json");
 
 // DB connection
-$host = "localhost";
-$user = "root";   // XAMPP default user
-$pass = "";       // XAMPP default password (empty)
-$db   = "task_manager";
+$host = "sql210.infinityfree.com";
+$user = "if0_39985390";
+$pass = "Ri49FOPVqoi";
+$db   = "if0_39985390_hackethon";
 
 $conn = new mysqli($host, $user, $pass, $db);
 if ($conn->connect_error) {

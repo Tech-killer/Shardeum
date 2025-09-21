@@ -93,6 +93,22 @@ export default function ResourceBooking({ userRole, account, onTx }) {
       return;
     }
 
+    const totalCost = (parseFloat(selectedResource.hourlyRate) * bookingForm.duration).toString();
+
+    // Add confirmation dialog before proceeding with transaction
+    const confirmTransaction = confirm(
+      "🏢 Book Resource Transaction\n\n" +
+      `Resource: ${selectedResource.name}\n` +
+      `Duration: ${bookingForm.duration} hour(s)\n` +
+      `Total Cost: ${totalCost} SHM\n\n` +
+      "Do you want to proceed with the booking?"
+    );
+
+    if (!confirmTransaction) {
+      console.log("❌ User cancelled resource booking");
+      return;
+    }
+
     try {
       setLoading(true);
       
@@ -169,10 +185,24 @@ export default function ResourceBooking({ userRole, account, onTx }) {
     try {
       setLoading(true);
       
+      const booking = bookings.find(b => b.id === bookingId);
+
+      // Add confirmation dialog before proceeding with transaction
+      const confirmTransaction = confirm(
+        "❌ Cancel Booking Transaction\n\n" +
+        `Cancel booking for: ${booking?.resourceName}\n` +
+        "This will process a refund transaction.\n\n" +
+        "Do you want to proceed?"
+      );
+
+      if (!confirmTransaction) {
+        console.log("❌ User cancelled booking cancellation");
+        setLoading(false);
+        return;
+      }
+      
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      
-      const booking = bookings.find(b => b.id === bookingId);
       
       // Simulate blockchain transaction for booking cancellation
       const tx = await signer.sendTransaction({

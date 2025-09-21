@@ -5,10 +5,10 @@ header("Access-Control-Allow-Methods: GET, PATCH, OPTIONS");
 header("Content-Type: application/json");
 
 // DB connection
-$host = "localhost";
-$user = "root";
-$pass = "";
-$db   = "task_manager";
+$host = "sql210.infinityfree.com";
+$user = "if0_39985390";
+$pass = "Ri49FOPVqoi";
+$db   = "if0_39985390_hackethon";
 
 $conn = new mysqli($host, $user, $pass, $db);
 if ($conn->connect_error) {
@@ -58,8 +58,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $debugTaskId) {
     ]);
 }
 
-// 1️⃣ GET all tasks
+// 1️⃣ GET all tasks or single task
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    // Get specific task by ID for debugging
+    if ($action === 'get_task' && $taskId) {
+        $taskIdInt = intval($taskId);
+        $sql = "SELECT * FROM tasks WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $taskIdInt);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows === 0) {
+            respond(["success" => false, "message" => "Task not found", "task_id" => $taskId]);
+        }
+        
+        $task = $result->fetch_assoc();
+        $task['tags'] = $task['tags'] ? explode(",", $task['tags']) : [];
+        $stmt->close();
+        
+        respond([
+            "success" => true,
+            "task" => $task,
+            "message" => "Task fetched successfully"
+        ]);
+    }
+    
+    // Get all tasks (default)
     $sql = "SELECT * FROM tasks ORDER BY created_at DESC";
     $result = $conn->query($sql);
     $tasks = [];
@@ -119,10 +144,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'PATCH' && $taskId && $currentUser) {
             respond(["success" => false, "message" => "Task not available. Current status: " . $currentStatus]);
         }
         
-        // Update task with prepared statement - more permissive condition
-        $updateSql = "UPDATE tasks SET assignee = ?, status = 'in_progress' WHERE id = ? AND (assignee IS NULL OR assignee = '' OR assignee = 'null')";
+        // Update task with prepared statement - simplified and more reliable
+        $updateSql = "UPDATE tasks SET assignee = ?, status = 'in_progress', updated_at = NOW() WHERE id = ?";
         $updateStmt = $conn->prepare($updateSql);
         if (!$updateStmt) {
+            error_log("Prepare failed: " . $conn->error);
             respond(["success" => false, "message" => "Database error: " . $conn->error]);
         }
         
@@ -130,9 +156,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'PATCH' && $taskId && $currentUser) {
         $success = $updateStmt->execute();
         $affectedRows = $updateStmt->affected_rows;
         
-        // Log the SQL query for debugging
-        error_log("SQL Query: UPDATE tasks SET assignee = '$currentUser', status = 'in_progress' WHERE id = $taskId AND (assignee IS NULL OR assignee = '' OR assignee = 'null')");
-        error_log("Current user: " . $currentUser);
+        // Enhanced logging
+        error_log("SQL Query: UPDATE tasks SET assignee = '$currentUser', status = 'in_progress', updated_at = NOW() WHERE id = $taskId");
+        error_log("Execute success: " . ($success ? 'true' : 'false'));
+        error_log("Affected rows: " . $affectedRows);
+        error_log("MySQL error: " . $updateStmt->error);
         
         $updateStmt->close();
         
@@ -163,13 +191,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'PATCH' && $taskId && $currentUser) {
                 "debug_info" => [
                     "affected_rows" => $affectedRows,
                     "task_id" => $taskId,
-                    "current_user" => $currentUser
+                    "current_user" => $currentUser,
+                    "backend_updated" => true
                 ]
             ]);
         } else {
+            // If no rows affected, try to fetch current task state for debugging
+            $debugSql = "SELECT * FROM tasks WHERE id = ?";
+            $debugStmt = $conn->prepare($debugSql);
+            $debugStmt->bind_param("i", $taskId);
+            $debugStmt->execute();
+            $debugResult = $debugStmt->get_result();
+            $currentTaskState = $debugResult->fetch_assoc();
+            $debugStmt->close();
+            
+            error_log("Current task state when update failed: " . json_encode($currentTaskState));
             error_log("Update failed - Success: " . ($success ? 'true' : 'false') . ", Affected rows: " . $affectedRows);
             error_log("========================");
-            respond(["success" => false, "message" => "Failed to accept task. It may have been assigned to someone else.", "debug_info" => ["affected_rows" => $affectedRows, "sql_success" => $success]]);
+            
+            respond([
+                "success" => false, 
+                "message" => "Failed to accept task. Database update failed.", 
+                "debug_info" => [
+                    "affected_rows" => $affectedRows,
+                    "sql_success" => $success,
+                    "current_task_state" => $currentTaskState,
+                    "task_id" => $taskId,
+                    "current_user" => $currentUser
+                ]
+            ]);
         }
     }
 

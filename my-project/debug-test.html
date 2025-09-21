@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Test - Completed Tasks</title>
+</head>
+<body>
+    <h1>Testing Completed Tasks Visibility</h1>
+    <div id="results"></div>
+    
+    <script>
+        console.log("🧪 Starting debug test...");
+        
+        async function testAPI() {
+            try {
+                console.log("📡 Fetching from transition.php...");
+                const response = await fetch("https://shardeum.wuaze.com/backend/transition.php");
+                const data = await response.json();
+                
+                console.log("✅ API Response:", data);
+                document.getElementById('results').innerHTML += `<p>API Success: ${data.success}</p>`;
+                document.getElementById('results').innerHTML += `<p>Total Transactions: ${data.transactions?.length || 0}</p>`;
+                
+                if (data.success && data.transactions) {
+                    // Filter completed tasks
+                    const completedTasks = data.transactions.filter(tx => tx.status === 'completed');
+                    console.log(`🎯 Completed tasks found: ${completedTasks.length}`);
+                    document.getElementById('results').innerHTML += `<p>Completed Tasks: ${completedTasks.length}</p>`;
+                    
+                    console.log("🏆 Completed tasks details:");
+                    completedTasks.forEach((task, index) => {
+                        console.log(`  ${index + 1}. "${task.title}" - Status: ${task.status}, Type: ${task.transaction_type}`);
+                        document.getElementById('results').innerHTML += `<p>Task ${index + 1}: "${task.title}" (Status: ${task.status})</p>`;
+                    });
+                    
+                    // Test filtering logic
+                    console.log("🔍 Testing filter logic...");
+                    const testFilter = "completed";
+                    const filtered = data.transactions.filter(tx => tx.status === "completed" || tx.status === 'completed');
+                    console.log(`Filter "${testFilter}" result: ${filtered.length} transactions`);
+                    document.getElementById('results').innerHTML += `<p>Filter Test Result: ${filtered.length} completed transactions</p>`;
+                }
+            } catch (error) {
+                console.error("❌ Error:", error);
+                document.getElementById('results').innerHTML += `<p>Error: ${error.message}</p>`;
+            }
+        }
+        
+        testAPI();
+    </script>
+</body>
+</html>

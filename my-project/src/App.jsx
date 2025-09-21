@@ -1,16 +1,24 @@
-import React, { useState, useEffect } from "react";
-// Shared Components
+import React, { useState, useEffect, lazy, Suspense } from "react";
+// Essential components loaded immediately
 import WalletDashboard from "./components/shared/WalletDashboard";
-import SendTransaction from "./components/shared/SendTransaction";
-import ShardeumShowcase from "./components/shared/ShardeumShowcase";
-// Admin Components
-import TaskManagement from "./components/admin/TaskManagement";
-import CertificateSystem from "./components/admin/CertificateSystem";
-import VotingSystem from "./components/admin/VotingSystem";
-// User Components
-import ResourceBooking from "./components/user/ResourceBooking";
-import UserTaskDashboard from "./components/user/UserTaskDashboard";
 import { ethers } from "ethers";
+
+// Lazy load components for code splitting
+const ShardeumShowcase = lazy(() => import("./components/shared/ShardeumShowcase"));
+const TransactionHistory = lazy(() => import("./components/shared/TransactionHistory"));
+const TaskManagement = lazy(() => import("./components/admin/TaskManagement"));
+const VotingSystem = lazy(() => import("./components/admin/VotingSystem"));
+const ResourceBooking = lazy(() => import("./components/user/ResourceBooking"));
+const UserTaskDashboard = lazy(() => import("./components/user/UserTaskDashboard"));
+const Certificate = lazy(() => import("./components/certificates").then(module => ({ default: module.Certificate })));
+
+// Loading component
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center py-12">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+    <span className="ml-3 text-gray-600">Loading...</span>
+  </div>
+);
 
 export default function App() {
   const [account, setAccount] = useState("");
@@ -20,8 +28,8 @@ export default function App() {
   const [txs, setTxs] = useState([]);
   const [isConnecting, setIsConnecting] = useState(false);
 
-  // Admin address constant
-  const ADMIN_ADDRESS = "0xa15eCBf6E059F2F09CA8400217429833Bc3B56C4";
+  // Admin address constant - Updated to correct admin address
+  const ADMIN_ADDRESS = "0xaA16Eb82Cd4C39473101846c2975eAd10954cc50";
 
   // Determine role based on wallet address
   const determineUserRole = (address) => {
@@ -178,14 +186,8 @@ export default function App() {
     };
   }, [account]);
 
-  // Simulate role detection based on wallet address
-  useEffect(() => {
-    if (account) {
-      // For demo: if address starts with 0x0, 0x1, 0x2 -> Admin, else User
-      const firstChar = account.charAt(2).toLowerCase();
-      setUserRole(['0', '1', '2'].includes(firstChar) ? "Admin" : "User");
-    }
-  }, [account]);
+  // Removed conflicting role detection logic that was overriding admin address detection
+  // Role is now properly set in connectWallet, switchWallet, and checkConnection functions
 
   // add txs when user sends
   const addTx = (tx) => {
@@ -197,7 +199,10 @@ export default function App() {
 
   const menuItems = [
     { id: "dashboard", label: "🏠 Dashboard", roles: ["Admin", "User"] },
-    { id: "shardeum", label: "⚡ Shardeum Power", roles: ["Admin", "User"] },
+    // 🏆 Daily Achievements menu item commented out
+    // { id: "achievements", label: "🏆 Daily Achievements", roles: ["Admin", "User"] },
+    // ⚡ Shardeum Power moved to dashboard - menu item commented out
+    // { id: "shardeum", label: "⚡ Shardeum Power", roles: ["Admin", "User"] },
     { id: "tasks", label: "📋 Task Management", roles: ["Admin", "User"] },
     { id: "certificates", label: "🎓 Certificates", roles: ["Admin", "User"] },
     { id: "voting", label: "🗳️ Voting", roles: ["Admin", "User"] },
@@ -270,6 +275,24 @@ export default function App() {
           </div>
         </div>
       </header>
+
+      {/* Security Notice for MetaMask Warning */}
+      <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <span className="text-yellow-400 text-xl">⚠️</span>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-yellow-700">
+                <strong>MetaMask Security Notice:</strong> This app is hosted on InfinityFree (shardeum.wuaze.com) and may trigger a "malicious site" warning in MetaMask. 
+                This is a <strong>false positive</strong> common with free hosting services. The app is safe and only interacts with Shardeum blockchain for legitimate transactions. 
+                <strong>All blockchain transactions have been disabled</strong> to prevent unwanted prompts - the app now operates in "backend-only" mode.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {!account ? (
@@ -466,16 +489,28 @@ export default function App() {
                     </div>
                   </div>
                   
-                  <SendTransaction sender={account} onTx={addTx} />
+                  {/* Shardeum Power Content Integrated into Dashboard */}
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <ShardeumShowcase />
+                  </Suspense>
+                  
+                  {/* 💸 Send Transaction section commented out */}
+                  {/* <SendTransaction sender={account} onTx={addTx} /> */}
                 </div>
               )}
 
-              {activeTab === "shardeum" && (
+              {/* 🏆 Daily Achievements page commented out */}
+              {/* {activeTab === "achievements" && (
+                <DailyAchievements />
+              )} */}
+
+              {/* ⚡ Shardeum Power moved to dashboard - route commented out */}
+              {/* {activeTab === "shardeum" && (
                 <ShardeumShowcase />
-              )}
+              )} */}
 
               {activeTab === "tasks" && (
-                <>
+                <Suspense fallback={<LoadingSpinner />}>
                   {userRole === "Admin" ? (
                     <TaskManagement 
                       userRole={userRole} 
@@ -489,122 +524,43 @@ export default function App() {
                       onTx={addTx} 
                     />
                   )}
-                </>
+                </Suspense>
               )}
 
               {activeTab === "certificates" && (
-                <CertificateSystem 
-                  userRole={userRole} 
-                  account={account} 
-                  onTx={addTx} 
-                />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <Certificate 
+                    userRole={userRole} 
+                    account={account} 
+                  />
+                </Suspense>
               )}
 
               {activeTab === "voting" && (
-                <VotingSystem 
-                  userRole={userRole} 
-                  account={account} 
-                  onTx={addTx} 
-                />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <VotingSystem 
+                    userRole={userRole} 
+                    account={account} 
+                    onTx={addTx} 
+                  />
+                </Suspense>
               )}
 
               {activeTab === "resources" && (
-                <ResourceBooking 
-                  userRole={userRole} 
-                  account={account} 
-                  onTx={addTx} 
-                />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <ResourceBooking 
+                    userRole={userRole} 
+                    account={account} 
+                    onTx={addTx} 
+                  />
+                </Suspense>
               )}
 
               {activeTab === "transactions" && (
                 <div className="bg-white rounded-xl shadow-lg p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg flex items-center justify-center">
-                        <span className="text-white text-lg">📊</span>
-                      </div>
-                      <div>
-                        <h2 className="text-2xl font-bold text-gray-900">Transaction History</h2>
-                        <p className="text-sm text-gray-600">All your blockchain transactions with explorer links</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-gray-600">Total Transactions</p>
-                      <p className="text-2xl font-bold text-green-600">{txs.length}</p>
-                    </div>
-                  </div>
-                  
-                  {txs.length > 0 ? (
-                    <div className="space-y-4">
-                      {txs.map((tx, index) => (
-                        <div key={index} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center space-x-3">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                                tx.pending ? "bg-yellow-100" : "bg-green-100"
-                              }`}>
-                                <span className="text-sm">
-                                  {tx.pending ? "⏳" : "✅"}
-                                </span>
-                              </div>
-                              <div>
-                                <p className="font-medium text-gray-900">
-                                  {tx.action || (tx.pending ? "Transaction Pending" : "Transaction Confirmed")}
-                                </p>
-                                {tx.details && (
-                                  <p className="text-sm text-gray-600">{tx.details}</p>
-                                )}
-                                {/* Shardeum Performance Metrics */}
-                                {tx.confirmTime && !tx.pending && (
-                                  <div className="flex items-center space-x-4 text-xs mt-1">
-                                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
-                                      ⚡ {(tx.confirmTime/1000).toFixed(2)}s
-                                    </span>
-                                    {tx.estimatedUSDFee && (
-                                      <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                                        💰 ${tx.estimatedUSDFee.toFixed(4)}
-                                      </span>
-                                    )}
-                                    <span className="text-purple-600 font-medium">🚀 Shardeum Speed</span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-medium text-gray-900">{tx.value} SHM</p>
-                              <p className="text-xs text-gray-500">
-                                {new Date(tx.timestamp || Date.now()).toLocaleString()}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center justify-between text-sm text-gray-600">
-                            <div className="flex items-center space-x-4">
-                              <span>From: {tx.from.slice(0, 6)}...{tx.from.slice(-4)}</span>
-                              <span>→</span>
-                              <span>To: {tx.to.slice(0, 6)}...{tx.to.slice(-4)}</span>
-                            </div>
-                            <a 
-                              href={`https://explorer-sphinx.shardeum.org/tx/${tx.hash}`}
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium py-1 px-3 rounded-lg transition-all duration-200 text-xs"
-                            >
-                              🔗 View on Explorer
-                            </a>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span className="text-3xl">📊</span>
-                      </div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">No Transactions Yet</h3>
-                      <p className="text-gray-600">Your transaction history will appear here once you start using the platform</p>
-                    </div>
-                  )}
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <TransactionHistory account={account} />
+                  </Suspense>
                 </div>
               )}
             </div>

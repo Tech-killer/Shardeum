@@ -73,6 +73,18 @@ export default function VotingSystem({ userRole, account, onTx }) {
       return;
     }
 
+    // Add confirmation dialog before proceeding with transaction
+    const confirmTransaction = confirm(
+      "🗳️ Create Poll Transaction\n\n" +
+      "This will create a poll on the blockchain (0.001 SHM fee).\n\n" +
+      "Do you want to proceed?"
+    );
+
+    if (!confirmTransaction) {
+      console.log("❌ User cancelled poll creation");
+      return;
+    }
+
     try {
       setLoading(true);
       
@@ -146,11 +158,25 @@ export default function VotingSystem({ userRole, account, onTx }) {
     try {
       setLoading(true);
       
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      
       const poll = polls.find(p => p.id === pollId);
       const option = poll.options.find(o => o.id === optionId);
+
+      // Add confirmation dialog before proceeding with transaction
+      const confirmTransaction = confirm(
+        "🗳️ Submit Vote Transaction\n\n" +
+        `Voting for: "${option?.text}"\n` +
+        "Blockchain fee: 0.001 SHM\n\n" +
+        "Do you want to proceed?"
+      );
+
+      if (!confirmTransaction) {
+        console.log("❌ User cancelled vote submission");
+        setLoading(false);
+        return;
+      }
+      
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
       
       // Simulate blockchain transaction for voting
       const tx = await signer.sendTransaction({
